@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Visa Work-Hour Guard</title>
+<meta name="description" content="Free 48-hour fortnight checker for international students in Australia. Track hours across all your jobs and see the overlapping fortnights most students miss.">
+<meta property="og:title" content="Are you over 48 hours? Free student visa work-hour checker">
+<meta property="og:description" content="Fortnights overlap. 19 + 29 looks fine, but 29 + 29 = 58. Check your hours across every job in 30 seconds.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛡️</text></svg>">
+<style>
+  :root {
+    --bg: #f7f8fa; --surface: #ffffff; --text: #14161a; --muted: #5b6270; --border: #e3e6eb;
+    --accent: #1f6feb; --accent-ink: #ffffff; --ok: #1a7f37; --ok-bg: #e6f4ea; --bad: #c62828; --bad-bg: #fdecea;
+    --warn: #9a6700; --warn-bg: #fff6d6; --radius: 14px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0f1115; --surface: #171a21; --text: #eef0f4; --muted: #a2a9b6; --border: #2a2f3a;
+      --accent: #4c8dff; --accent-ink: #0b0d11; --ok: #4ac26b; --ok-bg: #12261a; --bad: #ff6b6b; --bad-bg: #2a1414;
+      --warn: #e3b341; --warn-bg: #2a2310;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1115; --surface: #171a21; --text: #eef0f4; --muted: #a2a9b6; --border: #2a2f3a;
+    --accent: #4c8dff; --accent-ink: #0b0d11; --ok: #4ac26b; --ok-bg: #12261a; --bad: #ff6b6b; --bad-bg: #2a1414;
+    --warn: #e3b341; --warn-bg: #2a2310;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { background: var(--bg); color: var(--text); font: 16px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 0 16px 64px; }
+  a { color: var(--accent); }
+  header.hero { padding: 48px 0 24px; }
+  .eyebrow { color: var(--accent); font-weight: 600; font-size: 14px; letter-spacing: .02em; }
+  h1 { font-size: clamp(28px, 6vw, 42px); line-height: 1.15; margin: 8px 0 12px; }
+  h2 { font-size: 22px; margin: 0 0 12px; }
+  h3 { font-size: 17px; margin: 0 0 8px; }
+  .lead { font-size: 18px; color: var(--muted); margin: 0 0 20px; }
+  .cta-row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .btn { appearance: none; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); font: inherit; font-weight: 600; padding: 11px 18px; border-radius: 10px; cursor: pointer; text-decoration: none; display: inline-block; }
+  .btn.secondary { background: transparent; color: var(--accent); }
+  .btn.small { padding: 7px 12px; font-size: 14px; }
+  .btn.ghost { border-color: var(--border); background: transparent; color: var(--muted); }
+  section.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin: 18px 0; }
+  .trap { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
+  .wk { border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; }
+  .wk b { display: block; font-size: 24px; }
+  .wk span { color: var(--muted); font-size: 13px; }
+  .fn { border-radius: 10px; padding: 10px 12px; margin: 6px 0; font-weight: 600; }
+  .fn.ok { background: var(--ok-bg); color: var(--ok); }
+  .fn.bad { background: var(--bad-bg); color: var(--bad); }
+  label { display: block; font-size: 14px; color: var(--muted); margin-bottom: 4px; }
+  input, select { font: inherit; color: var(--text); background: var(--bg); border: 1px solid var(--border); border-radius: 9px; padding: 9px 10px; width: 100%; }
+  .row { display: grid; grid-template-columns: 1.3fr .8fr 1.2fr auto; gap: 8px; align-items: end; }
+  @media (max-width: 560px) { .row { grid-template-columns: 1fr 1fr; } .row .btn { grid-column: span 2; } }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+  @media (max-width: 560px) { .row2 { grid-template-columns: 1fr 1fr; } .row2 .btn { grid-column: span 2; } }
+  table { width: 100%; border-collapse: collapse; font-size: 15px; }
+  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; font-size: 13px; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .x { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; }
+  .status { border-radius: 12px; padding: 14px; margin: 14px 0 6px; font-weight: 600; }
+  .status.ok { background: var(--ok-bg); color: var(--ok); }
+  .status.bad { background: var(--bad-bg); color: var(--bad); }
+  .status.warn { background: var(--warn-bg); color: var(--warn); }
+  .bar { height: 8px; background: var(--border); border-radius: 99px; overflow: hidden; margin-top: 4px; }
+  .bar > i { display: block; height: 100%; background: var(--ok); }
+  .bar > i.bad { background: var(--bad); }
+  .muted { color: var(--muted); font-size: 14px; }
+  .toggle { display: flex; gap: 14px; flex-wrap: wrap; margin: 12px 0; font-size: 14px; }
+  .toggle label { display: inline-flex; gap: 6px; align-items: center; color: var(--text); margin: 0; }
+  .toggle input { width: auto; }
+  .opts { display: grid; gap: 6px; }
+  .opts label { display: flex; gap: 8px; align-items: center; color: var(--text); font-size: 15px; margin: 0; }
+  .opts input { width: auto; }
+  fieldset { border: none; padding: 0; margin: 0 0 14px; }
+  legend { font-weight: 600; margin-bottom: 6px; }
+  .formmsg { margin-top: 10px; font-weight: 600; }
+  details { border-top: 1px solid var(--border); padding: 12px 0; }
+  details:first-of-type { border-top: none; }
+  summary { cursor: pointer; font-weight: 600; }
+  .disclaimer { font-size: 13px; color: var(--muted); border-left: 3px solid var(--warn); padding: 8px 12px; background: var(--warn-bg); border-radius: 6px; }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 24px 16px; }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<main>
+
+<header class="hero">
+  <div class="eyebrow">For international students in Australia 🇦🇺</div>
+  <h1>Don't lose your visa over one extra shift.</h1>
+  <p class="lead">Student visa holders can work 48 hours per fortnight during the semester. But fortnights <b>overlap</b>, and most students count them wrong. Check your hours across all your jobs, free, in 30 seconds.</p>
+  <div class="cta-row">
+    <a class="btn" href="#checker">Check my hours free</a>
+    <a class="btn secondary" href="#waitlist">Get the iPhone app</a>
+  </div>
+</header>
+
+<section class="card" aria-labelledby="trap-h">
+  <h2 id="trap-h">The trap most students fall into</h2>
+  <p>A "fortnight" is <b>any</b> 14 days starting on a Monday. A new one starts every week. You must be at or under 48 hours in <b>every</b> one of them.</p>
+  <div class="trap">
+    <div class="wk"><span>Week 1</span><b>19h</b></div>
+    <div class="wk"><span>Week 2</span><b>29h</b></div>
+    <div class="wk"><span>Week 3</span><b>29h</b></div>
+  </div>
+  <div class="fn ok">✓ Weeks 1 + 2 = 48 hours. Fine.</div>
+  <div class="fn bad">✗ Weeks 2 + 3 = 58 hours. Over by 10.</div>
+  <p class="muted">If you only count "every second week," you'd never notice. Add a second job and it gets harder. Home Affairs uses the same kind of example on its own condition 8105 page: 15, 30, 30 and 10 hours is a breach in weeks 2 + 3.</p>
+</section>
+
+<section class="card" id="checker" aria-labelledby="chk-h">
+  <h2 id="chk-h">Free 48-hour fortnight checker</h2>
+  <p class="muted">Add every shift from every job. Your data stays in this browser. Nothing is uploaded.</p>
+
+  <form id="shiftForm" class="row" autocomplete="off">
+    <div><label for="sDate">Date</label><input id="sDate" type="date" required></div>
+    <div><label for="sHours">Hours</label><input id="sHours" type="number" step="0.25" min="0.25" max="24" placeholder="6" required></div>
+    <div><label for="sJob">Job</label><input id="sJob" type="text" placeholder="Café, Uber, cleaning…" maxlength="40"></div>
+    <button class="btn" type="submit">Add shift</button>
+  </form>
+
+  <div class="toggle">
+    <label><input type="radio" name="mode" value="official" checked> Official (14 days starting on a Monday)</label>
+    <label><input type="radio" name="mode" value="strict"> Strict (any 14 days, extra safe)</label>
+  </div>
+
+  <details>
+    <summary>Semester breaks (optional)</summary>
+    <p class="muted">The 48-hour limit doesn't apply when your course is officially not in session. Add break dates from your official academic calendar. Not sure? Leave this empty. That's the safer choice.</p>
+    <form id="breakForm" class="row2" autocomplete="off">
+      <div><label for="bStart">Break starts</label><input id="bStart" type="date" required></div>
+      <div><label for="bEnd">Break ends</label><input id="bEnd" type="date" required></div>
+      <button class="btn small" type="submit">Add break</button>
+    </form>
+    <ul id="breakList" class="muted"></ul>
+  </details>
+
+  <div id="result" aria-live="polite"></div>
+
+  <div id="planner" class="hidden">
+    <h3>Can I take this shift?</h3>
+    <form id="previewForm" class="row" autocomplete="off">
+      <div><label for="pDate">Date</label><input id="pDate" type="date" required></div>
+      <div><label for="pHours">Hours</label><input id="pHours" type="number" step="0.25" min="0.25" max="24" placeholder="5" required></div>
+      <div></div>
+      <button class="btn secondary" type="submit">Check</button>
+    </form>
+    <div id="previewOut" aria-live="polite"></div>
+  </div>
+
+  <div id="shiftsWrap" class="hidden">
+    <h3 style="margin-top:18px">Your shifts</h3>
+    <table><thead><tr><th>Date</th><th>Job</th><th class="num">Hours</th><th></th></tr></thead><tbody id="shiftRows"></tbody></table>
+    <div class="cta-row" style="margin-top:10px">
+      <button class="btn ghost small" id="loadExample" type="button">Load the 19/29/29 example</button>
+      <button class="btn ghost small" id="clearAll" type="button">Clear all</button>
+    </div>
+  </div>
+  <div id="emptyHelp" class="cta-row" style="margin-top:10px">
+    <button class="btn ghost small" id="loadExample2" type="button">Try the 19/29/29 example</button>
+  </div>
+
+  <p class="disclaimer" style="margin-top:16px">General information only, not legal or migration advice. Rules can change. Always confirm your work conditions on <a href="https://immi.homeaffairs.gov.au/visas/already-have-a-visa/check-visa-details-and-conditions/see-your-visa-conditions?product=500" target="_blank" rel="noopener">Home Affairs (condition 8105)</a> or with <a href="https://immi.homeaffairs.gov.au/visas/already-have-a-visa/check-visa-details-and-conditions/check-conditions-online" target="_blank" rel="noopener">VEVO</a>, and speak to a registered migration agent if unsure.</p>
+</section>
+
+<section class="card" id="waitlist" aria-labelledby="wl-h">
+  <h2 id="wl-h">Get the iPhone app first</h2>
+  <p>The app tracks every job automatically, warns you <b>before</b> you accept a shift that puts you over, shows "hours left this fortnight" on your Home Screen, and exports a PDF record of your hours as proof. Join the waitlist and help shape it: 3 quick questions.</p>
+  <form id="waitlistForm" novalidate>
+    <fieldset>
+      <legend>Your email</legend>
+      <input type="email" name="email" placeholder="you@example.com" required autocomplete="email">
+    </fieldset>
+    <fieldset>
+      <legend>1. What phone do you use?</legend>
+      <div class="opts">
+        <label><input type="radio" name="phone" value="iPhone" required> iPhone</label>
+        <label><input type="radio" name="phone" value="Android"> Android</label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>2. How many jobs do you have right now?</legend>
+      <div class="opts">
+        <label><input type="radio" name="jobs" value="0" required> None yet</label>
+        <label><input type="radio" name="jobs" value="1"> 1</label>
+        <label><input type="radio" name="jobs" value="2"> 2</label>
+        <label><input type="radio" name="jobs" value="3+"> 3 or more</label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>3. Would you pay A$9.99 once for the app?</legend>
+      <div class="opts">
+        <label><input type="radio" name="pay" value="yes" required> Yes</label>
+        <label><input type="radio" name="pay" value="maybe"> Maybe</label>
+        <label><input type="radio" name="pay" value="no"> No, only if free</label>
+      </div>
+    </fieldset>
+    <fieldset>
+      <legend>Optional</legend>
+      <label for="city">City</label>
+      <input id="city" name="city" type="text" placeholder="Sydney, Melbourne…" maxlength="40">
+      <label for="from" style="margin-top:8px">Home country</label>
+      <input id="from" name="from" type="text" placeholder="Nepal, India…" maxlength="40">
+    </fieldset>
+    <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off" aria-hidden="true">
+    <button class="btn" type="submit">Join the waitlist</button>
+    <p class="muted">We'll only email you about the app. No spam, no sharing. Unsubscribe any time.</p>
+    <div id="formMsg" class="formmsg" aria-live="polite"></div>
+  </form>
+</section>
+
+<section class="card" aria-labelledby="faq-h">
+  <h2 id="faq-h">Questions</h2>
+  <details><summary>What exactly is the rule?</summary>
+    <p>Student visa holders (subclass 500) with work condition 8105 may work up to 48 hours per fortnight while their course is in session, and unlimited hours when it is not (for example, during scheduled course breaks). Home Affairs says "a fortnight is a period of 14 days starting on a Monday," so a new fortnight starts every Monday and they overlap. Check your own conditions in VEVO, since some visas have different conditions.</p></details>
+  <details><summary>What's the difference between Official and Strict mode?</summary>
+    <p>Official mode checks every 14-day period starting on a Monday, matching the regulation's wording. Strict mode checks every possible 14-day period. It may warn you more often, but it never misses one.</p></details>
+  <details><summary>What counts as "work"?</summary>
+    <p>According to Home Affairs, you've worked if you were at a workplace on a roster or timesheet (not counting unpaid breaks), were "clocked on" to an electronic system that records work, or were paid for the time according to your payslip. <b>For rideshare and delivery drivers, time signed in and ready to accept jobs counts, not just time on trips.</b> All jobs are added together.</p></details>
+  <details><summary>Does unpaid work or work experience count?</summary>
+    <p>Yes. Home Affairs says work experience counts toward the 48 hours whether it's paid or unpaid. The exception is a work placement that is a mandatory, registered part of your course (in its CRICOS registration). Students whose Master's by research or PhD has started can also work more than 48 hours. If you're unsure, check with your education provider or a registered migration agent.</p></details>
+  <details><summary>What if my employer pressures me to work more?</summary>
+    <p>You don't have to accept. If you're being exploited at work, the Fair Work Ombudsman can help, and Home Affairs has protections for visa holders who report workplace exploitation. See <a href="https://www.fairwork.gov.au/find-help-for/visa-holders-migrants" target="_blank" rel="noopener">Fair Work: visa holders</a>.</p></details>
+  <details><summary>Is my data private?</summary>
+    <p>Shifts you enter in the checker stay in your browser on this device. If you join the waitlist, we store only what you submit in the form.</p></details>
+</section>
+
+</main>
+<footer>Visa Work-Hour Guard · Not affiliated with the Australian Government · General information, not legal advice</footer>
+
+<script src="checker.js"></script>
+<script>
+(function () {
+  "use strict";
+
+  // ===== CONFIG: paste your Google Apps Script web-app URL here (see README) =====
+  const FORM_ENDPOINT = "https://script.google.com/macros/s/AKfycbxndSIdvzbH7vkMC8_Th9-TSa-V_qrBbvI0tTov4tZbflKSRx9xccamUUm9ImuEylNqAw/exec";
+  // ===============================================================================
+
+  const STORE_KEY = "vwg.v1";
+  const $ = (id) => document.getElementById(id);
+  const fmtDate = (iso) => new Date(iso + "T00:00:00").toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
+  const todayIso = () => { const d = new Date(); return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); };
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+  let state = { shifts: [], breaks: [], mode: "official" };
+  try { const saved = JSON.parse(localStorage.getItem(STORE_KEY)); if (saved && Array.isArray(saved.shifts)) state = Object.assign(state, saved); } catch (e) {}
+  const save = () => { try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) {} };
+  const opts = () => ({ mode: state.mode, breaks: state.breaks });
+
+  $("sDate").value = todayIso();
+  $("pDate").value = todayIso();
+  document.querySelector(`input[name=mode][value=${state.mode}]`).checked = true;
+
+  function render() {
+    const has = state.shifts.length > 0;
+    $("shiftsWrap").classList.toggle("hidden", !has);
+    $("planner").classList.toggle("hidden", !has);
+    $("emptyHelp").classList.toggle("hidden", has);
+
+    const sorted = state.shifts.map((s, i) => Object.assign({ i }, s)).sort((a, b) => b.date.localeCompare(a.date));
+    $("shiftRows").innerHTML = sorted.map((s) =>
+      `<tr><td>${esc(fmtDate(s.date))}</td><td>${esc(s.job || "-")}</td><td class="num">${esc(s.hours)}</td>` +
+      `<td class="num"><button class="x" data-i="${s.i}" aria-label="Remove shift">×</button></td></tr>`).join("");
+
+    $("breakList").innerHTML = state.breaks.map((b, i) =>
+      `<li>${esc(fmtDate(b.start))} → ${esc(fmtDate(b.end))} <button class="x" data-b="${i}" aria-label="Remove break">×</button></li>`).join("");
+
+    if (!has) { $("result").innerHTML = ""; return; }
+
+    const r = VisaGuard.analyse(state.shifts, opts());
+    const cap = r.rules.capHours;
+    const left = VisaGuard.hoursLeftOn(todayIso(), state.shifts, opts());
+    let html = "";
+    if (r.breaches.length) {
+      const w = r.breaches.reduce((a, b) => (b.over > a.over ? b : a));
+      html += `<div class="status bad">⚠️ Over the limit in ${r.breaches.length} fortnight${r.breaches.length > 1 ? "s" : ""}. Worst: ${esc(fmtDate(w.start))}–${esc(fmtDate(w.end))}, ${w.hours}h (${w.over}h over).</div>`;
+    } else if (r.worst && r.worst.hours >= cap - 6) {
+      html += `<div class="status warn">Close to the limit. Your busiest fortnight is ${r.worst.hours}h of ${cap}h.</div>`;
+    } else {
+      html += `<div class="status ok">✓ All fortnights are within ${cap} hours.</div>`;
+    }
+    html += `<p class="muted">Hours you can still work today without going over: <b>${left === Infinity ? "unlimited (course break)" : left + "h"}</b></p>`;
+
+    const recent = r.windows.slice(-8).reverse();
+    html += `<table><thead><tr><th>Fortnight</th><th class="num">Hours</th></tr></thead><tbody>` +
+      recent.map((w) => {
+        const pct = Math.min(100, (w.hours / cap) * 100);
+        return `<tr><td>${esc(fmtDate(w.start))} – ${esc(fmtDate(w.end))}<div class="bar"><i class="${w.ok ? "" : "bad"}" style="width:${pct}%"></i></div></td>` +
+          `<td class="num">${w.hours}${w.ok ? "" : " ⚠️"}</td></tr>`;
+      }).join("") + `</tbody></table>`;
+    if (r.windows.length > 8) html += `<p class="muted">Showing the latest 8 of ${r.windows.length} fortnights.</p>`;
+    $("result").innerHTML = html;
+  }
+
+  $("shiftForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const hours = parseFloat($("sHours").value);
+    if (!$("sDate").value || !(hours > 0 && hours <= 24)) return;
+    state.shifts.push({ date: $("sDate").value, hours, job: $("sJob").value.trim() });
+    $("sHours").value = "";
+    save(); render(); $("sHours").focus();
+  });
+
+  $("breakForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    if (!$("bStart").value || !$("bEnd").value) return;
+    state.breaks.push({ start: $("bStart").value, end: $("bEnd").value });
+    save(); render();
+  });
+
+  document.addEventListener("click", (e) => {
+    const t = e.target;
+    if (t.dataset && t.dataset.i !== undefined) { state.shifts.splice(Number(t.dataset.i), 1); save(); render(); }
+    if (t.dataset && t.dataset.b !== undefined) { state.breaks.splice(Number(t.dataset.b), 1); save(); render(); }
+  });
+
+  document.querySelectorAll("input[name=mode]").forEach((el) => el.addEventListener("change", () => { state.mode = el.value; save(); render(); }));
+
+  function loadExample() {
+    const now = VisaGuard.dayNum(todayIso());
+    const mon = VisaGuard.mondayOf(now) - 14;
+    state.shifts = [
+      { date: VisaGuard.isoFromDay(mon + 1), hours: 19, job: "Café" },
+      { date: VisaGuard.isoFromDay(mon + 8), hours: 15, job: "Café" },
+      { date: VisaGuard.isoFromDay(mon + 10), hours: 14, job: "Uber" },
+      { date: VisaGuard.isoFromDay(mon + 15), hours: 15, job: "Café" },
+      { date: VisaGuard.isoFromDay(mon + 17), hours: 14, job: "Uber" },
+    ];
+    state.breaks = [];
+    save(); render();
+    $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  $("loadExample").addEventListener("click", loadExample);
+  $("loadExample2").addEventListener("click", loadExample);
+  $("clearAll").addEventListener("click", () => { state.shifts = []; save(); render(); });
+
+  $("previewForm").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const hours = parseFloat($("pHours").value);
+    if (!$("pDate").value || !(hours > 0)) return;
+    const p = VisaGuard.previewShift({ date: $("pDate").value, hours }, state.shifts, opts());
+    const left = p.hoursLeft === Infinity ? "unlimited" : p.hoursLeft + "h";
+    $("previewOut").innerHTML = p.safe
+      ? `<div class="status ok">✓ Safe. You can work up to ${left} on ${esc(fmtDate($("pDate").value))}.</div>`
+      : `<div class="status bad">✗ This shift would put you over. Max on ${esc(fmtDate($("pDate").value))}: ${left}.</div>`;
+  });
+
+  // ----- Waitlist -----
+  const params = new URLSearchParams(location.search);
+  const source = params.get("src") || params.get("utm_source") || document.referrer || "direct";
+
+  $("waitlistForm").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const f = e.target, msg = $("formMsg");
+    const data = new FormData(f);
+    if (data.get("website")) return; // bot trap
+    const email = String(data.get("email") || "").trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = "Please enter a valid email."; return; }
+    if (!data.get("phone") || !data.get("jobs") || !data.get("pay")) { msg.textContent = "Please answer the 3 questions."; return; }
+    data.delete("website");
+    data.append("source", source);
+    data.append("usedChecker", state.shifts.length > 0 ? "yes" : "no");
+    data.append("submittedAt", new Date().toISOString());
+    if (!FORM_ENDPOINT) { msg.textContent = "Waitlist isn't connected yet (site owner: set FORM_ENDPOINT)."; return; }
+    msg.textContent = "Sending…";
+    try {
+      await fetch(FORM_ENDPOINT, { method: "POST", mode: "no-cors", body: new URLSearchParams(data) });
+      f.reset();
+      msg.textContent = "✓ You're on the list! We'll email you when the app is ready. Share this page with a friend who works two jobs.";
+    } catch (err) {
+      msg.textContent = "Couldn't send. Please check your connection and try again.";
+    }
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
